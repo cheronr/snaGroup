@@ -35,10 +35,11 @@ install.packages("zoo")
 library(zoo)
 getwd()
 
-
+# Import the Excel spread sheet showing each country in africa and the trade zones the are a member of.
 countryZone <- groupData11
 str(countryZone)
 
+#COnverting first column to the rownames, of the data frame.
 countryZone <- as.data.frame(countryZone)
 countryZone
 countryZone1 <- countryZone[1:17]
@@ -48,7 +49,7 @@ countryZone1 <- countryZone1[,-1]
 countryZone1
 
 
-
+#Plots the graph incidence, showing circles as countrys and triangles as trade zones
 as_tbl_graph(graph.incidence(countryZone1)) %>% 
   ggraph()+
   geom_node_point(aes(shape = type, size = 18), show.legend = F)+
@@ -56,6 +57,7 @@ as_tbl_graph(graph.incidence(countryZone1)) %>%
   geom_edge_link()+
   theme_graph()
 
+#Specifying Trade zones as the nodes.
 CountryZone_project<- bipartite.projection(graph.incidence(countryZone1)) 
 CountryZone_project
 
@@ -67,6 +69,7 @@ projection2 <- as_tbl_graph(CountryZone_project$proj2) %>%
   theme_graph()
 projection2
 
+#Specifying countries as nodes.
 CountryZone_project<- bipartite.projection(graph.incidence(countryZone1)) 
 CountryZone_project
 
@@ -86,10 +89,31 @@ CountryZone_project
 
 install.packages("keyplayer")
 library(keyplayer)
+library(ggplot2)
+library(ggraph)
+library(tibble)
+library(readxl)
+library(igraph)
+library(tidygraph)
+library(tidyverse)
 
-#fragment1<- as_adjacency_matrix(proj2)
-#fragment(proj2)
+#Projection 1: where the nodes are represented by each contry and data is extracted (GLIs)
+proj1 <- as_tbl_graph(CountryZone_project$proj1)
+class(proj1)
+GLI_proj1 <- as_tbl_graph(proj1) %>% 
+  mutate(nodes = graph_order(),
+         edges = graph_size(), 
+         density = edges/((nodes*(nodes-1))), 
+         dist = graph_mean_dist(), 
+         radius = graph_radius(), 
+         diameter = graph_diameter(), 
+          components = graph_component_count(),
+          directed = graph_is_directed(),
+          bipartite = graph_is_bipartite()
+         )
+GLI_proj1
 
+#Projection 2: where the nodes are represented by each trade zone and data is extracted (GLIs)
 proj2 <- as_tbl_graph(CountryZone_project$proj2)
 class(proj2)
 GLI_proj2 <- as_tbl_graph(proj2) %>% 
@@ -106,9 +130,31 @@ GLI_proj2 <- as_tbl_graph(proj2) %>%
          )
 GLI_proj2
 
-proj1 <- as_tbl_graph(CountryZone_project$proj1)
-class(proj1)
-GLI_proj1 <- as_tbl_graph(proj1) %>% 
+
+
+
+
+#Removed the African Union, from projection 2 to compare any changes between projection 2 (Trade Zone with African union) and projection with out the african union. 
+
+#Removing the african union node from the graph.
+g2 <- delete_vertices(proj2, 1) 
+g2
+V(g2)
+
+#Creating a new graph without the African Union.
+projection_UN <- as_tbl_graph(g2)
+class(projection_UN)
+
+projection_no_union <- as_tbl_graph(projection_UN) %>% 
+  ggraph()+
+  geom_node_point(aes(size = 20), show.legend = F)+
+  geom_node_text(aes(label = name), colour = 'black', vjust = 2)+
+  geom_edge_link()+
+  theme_graph()
+projection_no_union 
+
+#Modified version of projection 2, where the nodes are represented by each trade zone (Excluding the African union) and data is extracted (GLIs)
+GLI_proj_NU <- as_tbl_graph(projection_UN) %>% 
   mutate(nodes = graph_order(),
          edges = graph_size(), 
          density = edges/((nodes*(nodes-1))), 
@@ -117,12 +163,9 @@ GLI_proj1 <- as_tbl_graph(proj1) %>%
          diameter = graph_diameter(), 
           components = graph_component_count(),
           directed = graph_is_directed(),
-          bipartite = graph_is_bipartite()
+          bipartite = graph_is_bipartite(), 
+         fragment = c(fragment(as_adjacency_matrix(projection_UN)))
          )
-GLI_proj1
-
-
-
-#The one with the highest fragmentation is the most central
+GLI_proj_NU
 ```
 
