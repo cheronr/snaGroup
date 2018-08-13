@@ -12,11 +12,32 @@ library(readxl)
 library(igraph)
 library(tidygraph)
 library(ggraph)
+
+install.packages("ggplot")
+library(ggplot2)
+install.packages("igraphdata")
+library(igraphdata)
+install.packages("sna")
+library(sna)
+install.packages("statnet")
+library(statnet)
+install.packages("intergraph")
+library(intergraph)
+install.packages("grid")
+library(grid)
+install.packages("gridExtra")
+library(gridExtra)
+install.packages("xtable")
+library(xtable)
+install.packages("kableExtra")
+library(kableExtra)
+install.packages("zoo")
+library(zoo)
 getwd()
 
 
 countryZone <- groupData11
-str(CountryZone)
+str(countryZone)
 
 countryZone <- as.data.frame(countryZone)
 countryZone
@@ -26,8 +47,6 @@ countryZone1
 countryZone1 <- countryZone1[,-1]
 countryZone1
 
-
-as_tbl_graph(graph.incidence(countryZone1))
 
 
 as_tbl_graph(graph.incidence(countryZone1)) %>% 
@@ -39,11 +58,71 @@ as_tbl_graph(graph.incidence(countryZone1)) %>%
 
 CountryZone_project<- bipartite.projection(graph.incidence(countryZone1)) 
 CountryZone_project
-as_tbl_graph(CountryZone_project$proj1) %>% 
+
+projection2 <- as_tbl_graph(CountryZone_project$proj2) %>% 
   ggraph()+
   geom_node_point(aes(size = 20), show.legend = F)+
   geom_node_text(aes(label = name), colour = 'black', vjust = 2)+
   geom_edge_link()+
   theme_graph()
+projection2
+
+CountryZone_project<- bipartite.projection(graph.incidence(countryZone1)) 
+CountryZone_project
+
+
+ projection1 <- as_tbl_graph(CountryZone_project$proj1) %>% 
+  ggraph()+
+  geom_node_point(aes(size = 20), show.legend = F)+
+  geom_node_text(aes(label = name), colour = 'black', vjust = 2)+
+  geom_edge_link()+
+  theme_graph()
+ projection1
+
+```
+
+
+```{r}
+
+install.packages("keyplayer")
+library(keyplayer)
+
+#fragment1<- as_adjacency_matrix(proj2)
+#fragment(proj2)
+
+proj2 <- as_tbl_graph(CountryZone_project$proj2)
+class(proj2)
+GLI_proj2 <- as_tbl_graph(proj2) %>% 
+  mutate(nodes = graph_order(),
+         edges = graph_size(), 
+         density = edges/((nodes*(nodes-1))), 
+         dist = graph_mean_dist(), 
+         radius = graph_radius(), 
+         diameter = graph_diameter(), 
+          components = graph_component_count(),
+          directed = graph_is_directed(),
+          bipartite = graph_is_bipartite(), 
+         fragment = c(fragment(as_adjacency_matrix(proj2)))
+         )
+GLI_proj2
+
+proj1 <- as_tbl_graph(CountryZone_project$proj1)
+class(proj1)
+GLI_proj1 <- as_tbl_graph(proj1) %>% 
+  mutate(nodes = graph_order(),
+         edges = graph_size(), 
+         density = edges/((nodes*(nodes-1))), 
+         dist = graph_mean_dist(), 
+         radius = graph_radius(), 
+         diameter = graph_diameter(), 
+          components = graph_component_count(),
+          directed = graph_is_directed(),
+          bipartite = graph_is_bipartite()
+         )
+GLI_proj1
+
+
+
+#The one with the highest fragmentation is the most central
 ```
 
