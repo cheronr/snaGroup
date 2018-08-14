@@ -33,6 +33,8 @@ install.packages("kableExtra")
 library(kableExtra)
 install.packages("zoo")
 library(zoo)
+install.packages("intergraph")
+library(intergraph)
 getwd()
 
 # Import the Excel spread sheet showing each country in africa and the trade zones the are a member of.
@@ -85,7 +87,7 @@ CountryZone_project
  projection1
 
 ```
-
+Measures of fragmentation: By removing the african union the distance of the nodes increased and the density of the nodes decreased. This is consistent with our fragmentations values as the fragmentation values increased when the african union was removed. Resuting in a more fragement data set as the african union was connected to all nodes. 
 
 ```{r}
 
@@ -168,12 +170,11 @@ GLI_proj_NU <- as_tbl_graph(projection_UN) %>%
 GLI_proj_NU
 ```
 
+
 ```{r}
 
 #Node level analysis for all zones 
-install.packages("intergraph")
-library(intergraph)
-projection2 <- as_tbl_graph(CountryZone_project$proj2)
+NodeLevel_proj2 <- as_tbl_graph(CountryZone_project$proj2)
 NodeLevel_proj2 <- as_tbl_graph(projection2) %>% 
         mutate(degree = degree(asNetwork(NodeLevel_proj2)),
         betweenness_centrality = betweenness(asNetwork(NodeLevel_proj2)),
@@ -183,8 +184,9 @@ NodeLevel_proj2 <- as_tbl_graph(projection2) %>%
 
 NodeLevel_proj2
 
-E(proj2)$Distance <- as.numeric(E(proj2)$weight)
-as_tbl_graph(proj2) %>% 
+
+E(projection2)$Distance <- as.numeric(E(projection2)$weight)
+as_tbl_graph(projection2) %>% 
   activate(edges) %>% 
   #filter(weight>median(Distance)) %>%
   activate(nodes) %>% 
@@ -198,5 +200,48 @@ as_tbl_graph(proj2) %>%
   scale_size_continuous(name = "Closeness Centrality",guide = 'legend') +
   theme_graph(base_family = "iA Writer Duospace", title_family = "SF Compact Display", background = "aliceblue", base_size = 8)+ 
   theme(legend.position="right")
+
+
+#Node level analysis without the Africa
+
+#Removing the african union node from the graph.
+remove_AUnion <- delete_vertices(proj2, 1) 
+remove_AUnion
+V(remove_AUnion)
+
+#Creating a new graph without the African Union.
+projection_UN <- as_tbl_graph(remove_AUnion)
+class(projection_UN)
+
+NodeLevel_proj2_NU <- as_tbl_graph(projection_UN)
+NodeLevel_proj2_NU <- as_tbl_graph(projection_UN) %>% 
+        mutate(degree = degree(asNetwork(NodeLevel_proj2_NU)),
+        betweenness_centrality = betweenness(asNetwork(NodeLevel_proj2_NU)),
+        closenss_centrality = closeness(asNetwork(NodeLevel_proj2_NU)),
+        #transitivity = transitivity(NodeLevel_proj2, type = "local")
+        )
+
+NodeLevel_proj2_NU
+
+
+E(projection_UN)$Distance <- as.numeric(E(projection_UN)$weight)
+as_tbl_graph(projection_UN) %>% 
+  activate(edges) %>% 
+  #filter(weight>median(Distance)) %>%
+  activate(nodes) %>% 
+  mutate(centrality = centrality_closeness(weights = weight)) %>% 
+  ggraph(layout = 'auto') + 
+  geom_edge_link2(aes(alpha = Distance), colour = "grey") + 
+  scale_edge_alpha(aes(alpha = Distance),range = c(0, 1)) +
+  geom_node_point(aes(size = centrality, colour = centrality)) + 
+  geom_node_text(aes(label = name), colour = 'black', vjust = 0.4) +
+  scale_color_continuous(name = "Closeness Centrality",guide = 'legend') + 
+  scale_size_continuous(name = "Closeness Centrality",guide = 'legend') +
+  theme_graph(base_family = "iA Writer Duospace", title_family = "SF Compact Display", background = "aliceblue", base_size = 8)+ 
+  theme(legend.position="right")
+```
+
+```{r}
+
 
 ```
