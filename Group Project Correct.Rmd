@@ -61,6 +61,7 @@ as_tbl_graph(graph.incidence(countryZone1)) %>%
 CountryZone_project<- bipartite.projection(graph.incidence(countryZone1)) 
 CountryZone_project
 
+
 projection2 <- as_tbl_graph(CountryZone_project$proj2) %>% 
   ggraph()+
   geom_node_point(aes(size = 20), show.legend = F)+
@@ -68,6 +69,7 @@ projection2 <- as_tbl_graph(CountryZone_project$proj2) %>%
   geom_edge_link()+
   theme_graph()
 projection2
+
 
 #Specifying countries as nodes.
 CountryZone_project<- bipartite.projection(graph.incidence(countryZone1)) 
@@ -131,9 +133,6 @@ GLI_proj2 <- as_tbl_graph(proj2) %>%
 GLI_proj2
 
 
-
-
-
 #Removed the African Union, from projection 2 to compare any changes between projection 2 (Trade Zone with African union) and projection with out the african union. 
 
 #Removing the african union node from the graph.
@@ -169,3 +168,35 @@ GLI_proj_NU <- as_tbl_graph(projection_UN) %>%
 GLI_proj_NU
 ```
 
+```{r}
+
+#Node level analysis for all zones 
+install.packages("intergraph")
+library(intergraph)
+projection2 <- as_tbl_graph(CountryZone_project$proj2)
+NodeLevel_proj2 <- as_tbl_graph(projection2) %>% 
+        mutate(degree = degree(asNetwork(NodeLevel_proj2)),
+        betweenness_centrality = betweenness(asNetwork(NodeLevel_proj2)),
+        closenss_centrality = closeness(asNetwork(NodeLevel_proj2)),
+        transitivity = transitivity(NodeLevel_proj2, type = "local")
+        )
+
+NodeLevel_proj2
+
+E(proj2)$Distance <- as.numeric(E(proj2)$weight)
+as_tbl_graph(proj2) %>% 
+  activate(edges) %>% 
+  #filter(weight>median(Distance)) %>%
+  activate(nodes) %>% 
+  mutate(centrality = centrality_closeness(weights = weight)) %>% 
+  ggraph(layout = 'auto') + 
+  geom_edge_link2(aes(alpha = Distance), colour = "grey") + 
+  scale_edge_alpha(aes(alpha = Distance),range = c(0, 1)) +
+  geom_node_point(aes(size = centrality, colour = centrality)) + 
+  geom_node_text(aes(label = name), colour = 'black', vjust = 0.4) +
+  scale_color_continuous(name = "Closeness Centrality",guide = 'legend') + 
+  scale_size_continuous(name = "Closeness Centrality",guide = 'legend') +
+  theme_graph(base_family = "iA Writer Duospace", title_family = "SF Compact Display", background = "aliceblue", base_size = 8)+ 
+  theme(legend.position="right")
+
+```
