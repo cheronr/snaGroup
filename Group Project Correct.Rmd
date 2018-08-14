@@ -87,7 +87,6 @@ CountryZone_project
  projection1
 
 ```
-Measures of fragmentation: By removing the african union the distance of the nodes increased and the density of the nodes decreased. This is consistent with our fragmentations values as the fragmentation values increased when the african union was removed. Resuting in a more fragement data set as the african union was connected to all nodes. 
 
 ```{r}
 
@@ -182,6 +181,7 @@ NodeLevel_proj2 <- as_tbl_graph(projection2) %>%
         transitivity = transitivity(NodeLevel_proj2, type = "local")
         )
 
+
 NodeLevel_proj2
 
 
@@ -239,6 +239,10 @@ as_tbl_graph(projection_UN) %>%
   scale_size_continuous(name = "Closeness Centrality",guide = 'legend') +
   theme_graph(base_family = "iA Writer Duospace", title_family = "SF Compact Display", background = "aliceblue", base_size = 8)+ 
   theme(legend.position="right")
+
+
+print(as.data.frame(NodeLevel_proj2))
+print(as.data.frame(NodeLevel_proj2_NU))
 ```
 
 ```{r}
