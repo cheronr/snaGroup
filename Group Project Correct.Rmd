@@ -589,14 +589,16 @@ as.data.frame(NodeLevel_SA_proj2)
 
 ```{r}
 #Transportation Routes with in Africa 
-TransportRoutes <- as.data.frame(TransportRoutes)
-TransportRoutes1 <- TransportRoutes[1:4]
-row.names(TransportRoutes1) <- TransportRoutes$Country
-TransportRoutes1 <- TransportRoutes1[,-1]
-TransportRoutes1_project<- bipartite.projection(graph.incidence(TransportRoutes1)) 
+TransportRoutes <- as.data.frame(TransportRoutes1)
+TransportRoutes
+TransportRoutes11 <- TransportRoutes[1:3]
+row.names(TransportRoutes11) <- TransportRoutes$Country
+TransportRoutes11 <- TransportRoutes11[,-1]
+TransportRoutes11
+TransportRoutes1_proj<- bipartite.projection(graph.incidence(TransportRoutes11)) 
 
 
- as_tbl_graph(TransportRoutes1_project$proj1) %>% 
+ as_tbl_graph(TransportRoutes1_proj$proj1) %>% 
   ggraph()+
   geom_node_point(aes(size = 20), show.legend = F)+
   geom_node_text(aes(label = name), colour = 'black', vjust = 2)+
@@ -604,6 +606,29 @@ TransportRoutes1_project<- bipartite.projection(graph.incidence(TransportRoutes1
   geom_node_point(colour = "firebrick4", size = 0.5, show.legend = F) + 
   ggtitle("Transport Routes.") +
   theme_graph(base_family = "Arial", title_family = "Arial", background = "aliceblue", title_size =11, subtitle_size = 8)
+
+ TR_proj1 <- as_tbl_graph(TransportRoutes1_proj$proj1)
+GLI_TR_proj1 <- as_tbl_graph(TR_proj1) %>% 
+  mutate(nodes = graph_order(),
+         edges = graph_size(), 
+         density = edges/((nodes*(nodes-1))), 
+         dist = graph_mean_dist(), 
+         diameter = graph_diameter(), 
+        components = graph_component_count(),
+         fragment = c(fragment(as_adjacency_matrix(TR_proj1)))
+         )
+as.data.frame(GLI_TR_proj1)
+
+ 
+NodeLevel_TR_proj1 <- as_tbl_graph(TransportRoutes1_proj$proj1)
+NodeLevel_TR_proj1 <- as_tbl_graph(TR_proj1) %>% 
+        mutate(degree = degree(asNetwork(NodeLevel_TR_proj1 )),
+        betweenness_centrality = betweenness(asNetwork(NodeLevel_TR_proj1)),
+        closenss_centrality = closeness(asNetwork(NodeLevel_TR_proj1)),
+        transitivity = transitivity(NodeLevel_TR_proj1, type = "local")
+        )
+as.data.frame(NodeLevel_TR_proj1 )
+
  
  
 
