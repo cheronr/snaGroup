@@ -85,6 +85,8 @@ CountryZone_project
   geom_edge_link()+
   theme_graph()
  projection1
+ 
+ 
 
 ```
 
@@ -112,8 +114,8 @@ GLI_proj1 <- as_tbl_graph(proj1) %>%
          radius = graph_radius(), 
          diameter = graph_diameter(), 
           components = graph_component_count(),
-          directed = graph_is_directed(),
-          bipartite = graph_is_bipartite()
+          components = graph_component_count(),
+         fragment = c(fragment(as_adjacency_matrix(proj1)))
          )
 GLI_proj1
 
@@ -174,7 +176,7 @@ GLI_proj_NU
 ```{r}
 
 #Node level analysis for all zones 
-NodeLevel_proj2 <- as_tbl_graph(CountryZone_project$proj2)
+projection2 <- as_tbl_graph(CountryZone_project$proj2)
 NodeLevel_proj2 <- as_tbl_graph(projection2) %>% 
         mutate(degree = degree(asNetwork(NodeLevel_proj2)),
         betweenness_centrality = betweenness(asNetwork(NodeLevel_proj2)),
@@ -290,33 +292,82 @@ as_tbl_graph(sample_gnp(n = 16, 0.3)) %>%
   ggraph()+
   geom_edge_link2(aes(alpha = 0.4), colour = "grey", width = 0.5, show.legend = F) + 
   geom_node_point(colour = "firebrick4", size = 0.5, show.legend = F) +
-  ggtitle("Erdos-Renyi Random Graph.", subtitle = "Nodes = 50, p = 0.1") +
+  ggtitle("Erdos-Renyi Random Graph.", subtitle = "Nodes = 16, p = 0.3") +
   theme_graph(base_family = "Arial", title_family = "Arial", background = "aliceblue", title_size =11, subtitle_size = 8),
 as_tbl_graph(sample_pa(n = 16)) %>% 
   ggraph()+
   geom_edge_link2(aes(alpha = 0.4), colour = "grey", width = 0.5, show.legend = F) + 
   geom_node_point(colour = "firebrick4", size = 0.5, show.legend = F) + 
-  ggtitle("Barabási-Albert Scale-Free Graph.", subtitle = "Nodes = 50, p = 0.1") +
+  ggtitle("Barabási-Albert Scale-Free Graph.", subtitle = "Nodes = 16, p = 0.3") +
   theme_graph(base_family = "Arial", title_family = "Arial", background = "aliceblue", title_size =11, subtitle_size = 8),
 as_tbl_graph(sample_smallworld(1, 16, 5, 0.3)) %>% 
   ggraph()+
   geom_edge_link2(aes(alpha = 0.4), colour = "grey", width = 0.5, show.legend = F) + 
   geom_node_point(colour = "firebrick4", size = 0.5, show.legend = F) + 
-  ggtitle("Watts-Strogatz Small-World Graph.", subtitle = "Dim = 1, Size, 50, Nei = 5, p = 0.01") +
+  ggtitle("Watts-Strogatz Small-World Graph.", subtitle = "Dim = 1, Size, 16, Nei = 5, p = 0.3") +
   theme_graph(base_family = "Arial", title_family = "Arial", background = "aliceblue", title_size =11, subtitle_size = 8),
 as_tbl_graph(CountryZone_project$proj2) %>% 
   ggraph()+
   geom_edge_link2(aes(alpha = 0.4), colour = "grey", width = 0.5, show.legend = F) + 
   geom_node_point(colour = "firebrick4", size = 0.5, show.legend = F) + 
-  ggtitle("Zones with AU.", subtitle = "Dim = 1, Size, 50, Nei = 5, p = 0.01") +
-  theme_graph(base_family = "Arial", title_family = "Arial", background = "aliceblue", title_size =11, subtitle_size = 8),
-as_tbl_graph(g2) %>% 
-  ggraph()+
-  geom_edge_link2(aes(alpha = 0.4), colour = "grey", width = 0.5, show.legend = F) + 
-  geom_node_point(colour = "firebrick4", size = 0.5, show.legend = F) + 
-  ggtitle("Zones without AU.", subtitle = "Dim = 1, Size, 50, Nei = 5, p = 0.01") +
+  ggtitle("Zones with AU.", subtitle = "Nodes = 16") +
   theme_graph(base_family = "Arial", title_family = "Arial", background = "aliceblue", title_size =11, subtitle_size = 8),
 nrow = 1)
+
+E_R <- list()
+S_W <- list()
+S_F <- list()
+A_Z <- list()
+probability <- list()
+
+for(i in 1:21){ #Creating 21 of each random graph with different probabilities each time 
+  p <- seq(0,1,by=0.05)
+  E_R[[i]]<- sample_gnp(n = 16, p = p[i])
+  S_W[[i]]<- sample_smallworld(size = 16, nei = 5, dim =1, p = p[i])
+  S_F[[i]]<- sample_pa(n = 16, power = p[i])
+  #A_Z[[i]]<- steph_function(CountryZone_project$proj2)
+}
+
+GLI_Wrapper <- function(g){ # The function takes an igraph object
+GLI <- as_tbl_graph(g) %>%  # It is changed to a tidugraph tbl
+  mutate(size = graph_order(), #Calculate the GLIS
+         edges = graph_size(),
+         density = edge_density(g),
+         average_distance = graph_mean_dist(),
+         trans = transitivity(g, type = "global")
+  ) %>% 
+  as.data.frame() #Convert it to a data.frame
+  GLI <- as.data.frame(t(GLI[1,])) # transpose to look better
+ return(GLI) # return the measurements
+}
+
+GLI_E_R<- t(as.data.frame((sapply(E_R,GLI_Wrapper))))
+colnames(GLI_E_R) <- c("Size","Edges","Density","Average_Distance","Transitivity")
+print(GLI_E_R)
+
+GLI_S_W<- t(as.data.frame((sapply(S_W,GLI_Wrapper))))
+colnames(GLI_S_W) <- c("Size","Edges","Density","Average_Distance","Transitivity")
+print(GLI_S_W)
+
+GLI_S_F<- t(as.data.frame((sapply(S_F,GLI_Wrapper))))
+colnames(GLI_S_F) <- c("Size","Edges","Density","Average_Distance","Transitivity")
+print(GLI_S_F)
+
+proj2 <- as_tbl_graph(CountryZone_project$proj2)
+class(proj2)
+GLI_proj2 <- as_tbl_graph(proj2) %>% 
+  mutate(nodes = graph_order(),
+         edges = graph_size(), 
+         density = edges/((nodes*(nodes-1))), 
+         dist = graph_mean_dist(), 
+         radius = graph_radius(), 
+         diameter = graph_diameter(), 
+          components = graph_component_count(),
+          directed = graph_is_directed(),
+          bipartite = graph_is_bipartite(), 
+         fragment = c(fragment(as_adjacency_matrix(proj2)))
+         )
+as.data.frame(GLI_proj2)
 ```
 
 
@@ -324,35 +375,35 @@ Devides the Zones in to North, East, South, West and Central Africa.
 ```{r}
 #Southern Africa 
 SouthernAfrica <- as.data.frame(SouthernAfrica)
-SouthernAfrica1 <- SouthernAfrica[1:17]
+SouthernAfrica1 <- SouthernAfrica[1:5]
 row.names(SouthernAfrica1) <- SouthernAfrica$Country
 SouthernAfrica1 <- SouthernAfrica1[,-1]
 SouthernAfrica1_project<- bipartite.projection(graph.incidence(SouthernAfrica1)) 
 
 #East Africa 
 EastAfrica <- as.data.frame(EastAfrica)
-EastAfrica1 <- EastAfrica[1:17]
+EastAfrica1 <- EastAfrica[1:11]
 row.names(EastAfrica1) <- EastAfrica$Country
 EastAfrica1 <- EastAfrica1[,-1]
 EastAfrica1_project<- bipartite.projection(graph.incidence(EastAfrica1)) 
 
 #West Africa
 WestAfrica <- as.data.frame(WestAfrica)
-WestAfrica1 <- WestAfrica[1:17]
+WestAfrica1 <- WestAfrica[1:14]
 row.names(WestAfrica1) <- WestAfrica$Country
 WestAfrica1 <- WestAfrica1[,-1]
 WestAfrica1_project<- bipartite.projection(graph.incidence(WestAfrica1)) 
 
 #North Africa
 Northafrica <- as.data.frame(Northafrica)
-Northafrica1 <- Northafrica[1:17]
+Northafrica1 <- Northafrica[1:7]
 row.names(Northafrica1) <- Northafrica$Country
 Northafrica1 <- Northafrica1[,-1]
 Northafrica1_project<- bipartite.projection(graph.incidence(Northafrica1)) 
 
 #Central Africa 
 CentralAfrica <- as.data.frame(CentralAfrica)
-CentralAfrica1 <- CentralAfrica[1:17]
+CentralAfrica1 <- CentralAfrica[1:8]
 row.names(CentralAfrica1) <- CentralAfrica$Country
 CentralAfrica1 <- CentralAfrica1[,-1]
 CentralAfrica1_project<- bipartite.projection(graph.incidence(CentralAfrica1)) 
@@ -430,7 +481,7 @@ as.data.frame(GLI_NA_proj2)
 
 #SOuthern Africa 
 SA_proj2 <- as_tbl_graph(SouthernAfrica1_project$proj2)
-GLI_SA_proj2 <- as_tbl_graph(CA_proj2) %>% 
+GLI_SA_proj2 <- as_tbl_graph(SA_proj2) %>% 
   mutate(nodes = graph_order(),
          edges = graph_size(), 
          density = edges/((nodes*(nodes-1))), 
@@ -553,4 +604,62 @@ TransportRoutes1_project<- bipartite.projection(graph.incidence(TransportRoutes1
   geom_node_point(colour = "firebrick4", size = 0.5, show.legend = F) + 
   ggtitle("Transport Routes.") +
   theme_graph(base_family = "Arial", title_family = "Arial", background = "aliceblue", title_size =11, subtitle_size = 8)
+ 
+ 
+
+```
+
+```{r}
+GDP <- GDPAfrica
+
+#COnverting first column to the rownames, of the data frame.
+GDP <- as.data.frame(GDP)
+GDP1 <- GDP[1:8]
+row.names(GDP1) <- GDP$Country
+GDP1 <- GDP1[,-1]
+
+as_tbl_graph(graph.incidence(GDP1)) %>% 
+  ggraph()+
+  geom_node_point(aes(shape = type, size = 18), show.legend = F)+
+  geom_node_text(aes(label = name), colour = 'black', vjust = 2)+
+  geom_edge_link()+
+  theme_graph()
+
+#Specifying Trade zones as the nodes.
+GDP_project<- bipartite.projection(graph.incidence(GDP1)) 
+
+#Specifying countries as nodes.
+GDP_project<- bipartite.projection(graph.incidence(GDP1)) 
+
+ projection1 <- as_tbl_graph(GDP_project$proj1) %>% 
+  ggraph()+
+  geom_node_point(aes(size = 20), show.legend = F)+
+  geom_node_text(aes(label = name), colour = 'black', vjust = 2)+
+  geom_edge_link()+
+  theme_graph()
+ projection1
+ 
+ 
+ GDP1_project<- bipartite.projection(graph.incidence(GDP1))
+ GDP1_project
+ 
+ GDP_proj1 <- as_tbl_graph(GDP1)
+  GDP_proj1 <- as_tbl_graph(GDP_proj1) %>% 
+  mutate(nodes = graph_order(),
+         edges = graph_size(), 
+         density = edges/((nodes*(nodes-1))), 
+         dist = graph_mean_dist(), 
+         diameter = graph_diameter(), 
+        components = graph_component_count(),
+         fragment = c(fragment(as_adjacency_matrix(GDP_proj1)))
+         )
+as.data.frame(GDP_proj1)
+
+GDP1_project_NA <- as_tbl_graph(GDP1)
+GDP1_project_NA <- as_tbl_graph(GDP1_project_NA) %>% 
+        mutate(degree = degree(asNetwork(GDP1_project_NA)),
+        transitivity = transitivity(GDP1_project_NA, type = "local")
+        )
+as.data.frame(GDP1_project_NA)
+
 ```
